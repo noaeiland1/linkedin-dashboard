@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate LinkedIn content for Noa's dashboard using Claude API."""
+"""Generate LinkedIn content for Noa's dashboard using Gemini API."""
 
 import os
 import json
@@ -150,25 +150,22 @@ prompt = f"""אתה עוזר תוכן ללינקדאין של נוע אילנד.
 - 150-300 מילים לפוסט
 """
 
-api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+api_key = os.environ.get("GEMINI_API_KEY", "")
 if not api_key:
-    print("ERROR: ANTHROPIC_API_KEY not set", file=sys.stderr)
+    print("ERROR: GEMINI_API_KEY not set", file=sys.stderr)
     sys.exit(1)
 
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+
 payload = json.dumps({
-    "model": "claude-sonnet-4-6",
-    "max_tokens": 4096,
-    "messages": [{"role": "user", "content": prompt}]
+    "contents": [{"parts": [{"text": prompt}]}],
+    "generationConfig": {"temperature": 0.7, "maxOutputTokens": 4096}
 }).encode("utf-8")
 
 req = urllib.request.Request(
-    "https://api.anthropic.com/v1/messages",
+    url,
     data=payload,
-    headers={
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-    },
+    headers={"content-type": "application/json"},
 )
 
 try:
@@ -178,7 +175,7 @@ except urllib.error.HTTPError as e:
     print(f"ERROR: HTTP {e.code}: {e.read().decode()}", file=sys.stderr)
     sys.exit(1)
 
-text = result["content"][0]["text"].strip()
+text = result["candidates"][0]["content"]["parts"][0]["text"].strip()
 text = re.sub(r"^```\w*\n?", "", text)
 text = re.sub(r"\n?```$", "", text).strip()
 
