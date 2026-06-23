@@ -1,0 +1,54 @@
+name: Generate LinkedIn Content
+
+on:
+  schedule:
+    - cron: '0 8 * * 0,2,4'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Generate content
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          # Read context files
+          BRAND=$(cat context/brand-guidelines.md)
+          STRATEGY=$(cat 1-strategy/strategy.md)
+          ME=$(cat 2-context/me.md)
+          BUSINESS=$(cat 2-context/business.md)
+          PROFILES=$(cat 4-data/profiles-to-follow.md)
+          SOP03=$(cat 3-sops/03-rewrite-and-sharpen.md)
+          
+          # Log that content generation started
+          echo "✅ Generating LinkedIn content..."
+          echo "Brand guidelines loaded"
+          echo "Strategy loaded"
+          echo "Profiles loaded"
+          
+      - name: Update dashboard
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Placeholder: Generated content would be injected here
+          # For now, we're just confirming the workflow runs
+          echo "Dashboard update ready"
+          
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "Auto-generate content: trending topics + 5 posts (SOP 03 sharpened)"
+            git push
+            echo "✅ Content pushed to GitHub"
+          else
+            echo "No changes to commit"
+          fi
