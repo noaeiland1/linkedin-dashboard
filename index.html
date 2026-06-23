@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LinkedIn Dashboard — נוע אילנד</title>
+<style>
+  :root {
+    --blue: #0a66c2;
+    --blue-light: #e8f0fe;
+    --green: #057642;
+    --green-light: #e6f4ea;
+    --red: #cc1016;
+    --red-light: #fce8e6;
+    --amber: #b45309;
+    --amber-light: #fef3c7;
+    --gray: #666;
+    --gray-light: #f4f6f8;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #f3f2ef;
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* HEADER */
+  .header {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo svg { width: 28px; height: 28px; }
+  .header-title { font-size: 17px; font-weight: 700; color: var(--blue); }
+  .header-meta { font-size: 12px; color: var(--gray); text-align: left; }
+  .header-updated { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+  /* NAV TABS */
+  .tabs {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 12px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* SECTIONS */
+  .section { display: none; padding: 16px; max-width: 680px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    background: var(--blue);
+    color: white;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* TOPIC CARDS */
+  .topic-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .topic-card.dismissed { opacity: 0.3; pointer-events: none; }
+  .topic-card.approved { border-color: var(--green); background: var(--green-light); }
+  .topic-card.saved { border-color: var(--amber); background: var(--amber-light); }
+
+  .topic-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .topic-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .topic-potential {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .potential-high { background: var(--green-light); color: var(--green); }
+  .potential-mid { background: var(--amber-light); color: var(--amber); }
+
+  .topic-row {
+    font-size: 13px;
+    color: var(--gray);
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .topic-row strong { color: var(--text); }
+
+  .topic-example {
+    background: var(--gray-light);
+    border-right: 3px solid var(--blue);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--gray);
+    font-style: italic;
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  .topic-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .topic-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-approve { border-color: var(--green); color: var(--green); }
+  .btn-approve:hover, .btn-approve.active { background: var(--green); color: white; }
+  .btn-dismiss { border-color: var(--red); color: var(--red); }
+  .btn-dismiss:hover, .btn-dismiss.active { background: var(--red); color: white; }
+  .btn-save { border-color: var(--amber); color: var(--amber); }
+  .btn-save:hover, .btn-save.active { background: var(--amber); color: white; }
+
+  .go-to-post {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+  }
+  .topic-card.approved .go-to-post { display: block; }
+
+  /* POST CARDS */
+  .post-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .post-card.published { border-color: var(--green); }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .post-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--blue-light);
+    color: var(--blue);
+  }
+  .post-tag.wildcard { background: #f3e8ff; color: #7c3aed; }
+  .post-tag.inner-shift { background: #fce7f3; color: #9d174d; }
+  .post-tag.published-tag { background: var(--green-light); color: var(--green); }
+
+  .post-wordcount {
+    font-size: 11px;
+    color: var(--gray);
+  }
+
+  .post-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 120px;
+    background: var(--gray-light);
+    cursor: text;
+    outline: none;
+    resize: none;
+    width: 100%;
+    font-family: inherit;
+  }
+  .post-text:focus { border-color: var(--blue); background: white; }
+
+  .post-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .btn-copy {
+    flex: 2;
+    padding: 12px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-copy:active { background: #0856a0; transform: scale(0.98); }
+  .btn-copy.copied { background: var(--green); }
+
+  .btn-publish {
+    flex: 1;
+    padding: 12px;
+    background: white;
+    color: var(--green);
+    border: 1.5px solid var(--green);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-publish.done { background: var(--green); color: white; }
+
+  /* PUBLISHED LOG */
+  .published-item {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-right: 4px solid var(--green);
+  }
+  .published-date { font-size: 11px; color: var(--gray); margin-bottom: 4px; }
+  .published-topic { font-size: 13px; font-weight: 600; color: var(--blue); margin-bottom: 6px; }
+  .published-excerpt { font-size: 13px; color: var(--gray); line-height: 1.5; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a1a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* CONFIG NOTICE */
+  .config-notice {
+    background: var(--amber-light);
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--amber);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    <span class="header-title">LinkedIn Dashboard</span>
+  </div>
+  <div>
+    <div class="header-meta">נוע אילנד</div>
+    <div class="header-updated" id="last-updated">טוען...</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('brief')">📋 הבריף</div>
+  <div class="tab" onclick="showTab('posts')">✍️ פוסטים</div>
+  <div class="tab" onclick="showTab('published')">✅ פורסם</div>
+</div>
+
+<!-- BRIEF SECTION -->
+<div class="section active" id="tab-brief">
+  <div id="config-warning" class="config-notice" style="display:none">
+    ⚙️ הגדרה ראשונה: הדבקי את ה-GitHub token שלך כדי שהבחירות שלך יישמרו בכל המכשירים.
+    <br><br>
+    <input id="token-input" type="password" placeholder="github_pat_..." style="width:100%;padding:8px;border:1px solid #fbbf24;border-radius:6px;font-size:13px;margin-bottom:8px;">
+    <button onclick="saveToken()" style="background:#b45309;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;">שמור</button>
+  </div>
+  <div class="section-title">
+    נושאים חמים השבוע
+    <span class="badge" id="brief-count">0</span>
+  </div>
+  <div id="brief-container">
+    <div class="empty-state">
+      <div class="icon">📡</div>
+      <p>הבריף יתעדכן אוטומטית<br>ראשון / שלישי / חמישי בשעה 8:00</p>
+    </div>
+  </div>
+</div>
+
+<!-- POSTS SECTION -->
+<div class="section" id="tab-posts">
+  <div class="section-title">
+    פוסטים מוכנים לפרסום
+    <span class="badge" id="posts-count">0</span>
+  </div>
+  <div id="posts-container">
+    <div class="empty-state">
+      <div class="icon">✍️</div>
+      <p>הפוסטים יתעדכנו אוטומטית<br>ראשון / שלישי / חמישי בשעה 8:00</p>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLISHED SECTION -->
+<div class="section" id="tab-published">
+  <div class="section-title">פוסטים שפורסמו</div>
+  <div id="published-container">
+    <div class="empty-state">
+      <div class="icon">📖</div>
+      <p>פוסטים שתסמני כ"פורסם"<br>יופיעו כאן</p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — filled by scheduled task on each update
+// ============================================================
+const CONFIG = {
+  GITHUB_OWNER: "noaeiland1",
+  GITHUB_REPO: "linkedin-dashboard",
+  // Token is stored in localStorage (never in source code)
+  // On first visit the setup prompt asks for it once
+  get GITHUB_TOKEN() { return localStorage.getItem('noa-gh-token') || ''; },
+  LAST_UPDATED: "LAST_UPDATED_PLACEHOLDER"
+};
+
+// ============================================================
+// CONTENT — injected by scheduled task on each update
+// ============================================================
+const CONTENT = {
+  topics: [
+    // TOPICS_PLACEHOLDER
+    // Example structure (replaced by scheduler):
+    // {
+    //   id: "topic-1",
+    //   name: "AI מחליף את מי שמחזיק בתשובות",
+    //   hot: "כולם מדברים על AI ומנהלים — מה הם עושים עם זה",
+    //   angle: "הזווית שלך: לא מה AI יחליף — אלא מה קורה לזהות של מי שבנה קריירה על 'אני יודע'",
+    //   potential: "גבוה",
+    //   example: "Tom Even כתב: 'בפעם הראשונה ההנהלה היא לא זו שמחזיקה בתשובות' — 34 לייקים, 18 תגובות"
+    // }
+  ],
+  posts: [
+    // POSTS_PLACEHOLDER
+    // Example structure:
+    // {
+    //   id: "post-1",
+    //   topicId: "topic-1",
+    //   type: "trending", // or "wildcard" or "inner-shift"
+    //   topicName: "AI ומנהלים",
+    //   text: "...",
+    // }
+  ],
+  publishedLog: [
+    // PUBLISHED_LOG_PLACEHOLDER
+    // Filled from GitHub Issues by scheduled task
+    // {
+    //   date: "23.6.2026",
+    //   topic: "AI ומנהלים",
+    //   excerpt: "יש שאלה שאף אחד לא שואל..."
+    // }
+  ]
+};
+
+// ============================================================
+// STATE (localStorage for immediate UI, GitHub Issues for persistence)
+// ============================================================
+function getState() {
+  try {
+    return JSON.parse(localStorage.getItem('noa-linkedin-state') || '{}');
+  } catch { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem('noa-linkedin-state', JSON.stringify(state));
+}
+function getTopicState(topicId) {
+  return getState()[topicId] || null;
+}
+function setTopicState(topicId, action) {
+  const state = getState();
+  state[topicId] = action;
+  saveState(state);
+}
+
+// ============================================================
+// GITHUB ISSUES — save feedback
+// ============================================================
+async function createIssue(title, body) {
+  if (!CONFIG.GITHUB_TOKEN) return;
+  try {
+    await fetch(`https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/issues`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title, body, labels: ['noa-feedback'] })
+    });
+  } catch(e) { console.log('GitHub issue failed:', e); }
+}
+
+async function saveFeedback(action, topicId, topicName, extra) {
+  const emoji = { approve: '✅', dismiss: '❌', save: '📌', published: '🚀' }[action];
+  const label = { approve: 'SELECTED', dismiss: 'DISMISS', save: 'SAVE', published: 'PUBLISHED' }[action];
+  const date = new Date().toLocaleDateString('he-IL');
+  const title = `${emoji} ${label}: ${topicName}`;
+  const body = `**פעולה:** ${label}\n**נושא:** ${topicName}\n**תאריך:** ${date}${extra ? '\n**תוכן:** ' + extra : ''}`;
+  await createIssue(title, body);
+}
+
+// ============================================================
+// RENDER BRIEF
+// ============================================================
+function renderBrief() {
+  const container = document.getElementById('brief-container');
+  const count = document.getElementById('brief-count');
+
+  if (!CONTENT.topics.length) return;
+
+  count.textContent = CONTENT.topics.length;
+  container.innerHTML = '';
+
+  CONTENT.topics.forEach(topic => {
+    const savedAction = getTopicState(topic.id);
+    const card = document.createElement('div');
+    card.className = `topic-card ${savedAction ? savedAction : ''}`;
+    card.id = `topic-${topic.id}`;
+
+    const potentialClass = topic.potential === 'גבוה' ? 'potential-high' : 'potential-mid';
+
+    card.innerHTML = `
+      <div class="topic-header">
+        <div class="topic-name">${topic.name}</div>
+        <div class="topic-potential ${potentialClass}">פוטנציאל ${topic.potential}</div>
+      </div>
+      <div class="topic-row"><strong>מה רועש:</strong> ${topic.hot}</div>
+      <div class="topic-row"><strong>הזווית שלך:</strong> ${topic.angle}</div>
+      ${topic.example ? `<div class="topic-example">${topic.example}</div>` : ''}
+      <div class="topic-actions">
+        <button class="topic-btn btn-approve ${savedAction === 'approved' ? 'active' : ''}" onclick="handleTopic('approve', '${topic.id}', '${topic.name.replace(/'/g, "\\'")}', this)">✓ רלוונטי</button>
+        <button class="topic-btn btn-save ${savedAction === 'saved' ? 'active' : ''}" onclick="handleTopic('save', '${topic.id}', '${topic.name.replace(/'/g, "\\'")}', this)">📌 לאחר כך</button>
+        <button class="topic-btn btn-dismiss ${savedAction === 'dismissed' ? 'active' : ''}" onclick="handleTopic('dismiss', '${topic.id}', '${topic.name.replace(/'/g, "\\'")}', this)">✗ לא רלוונטי</button>
+      </div>
+      <button class="go-to-post" onclick="goToPost('${topic.id}')">← ראי את הפוסט</button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+async function handleTopic(action, topicId, topicName, btn) {
+  const card = document.getElementById(`topic-${topicId}`);
+  const wasActive = btn.classList.contains('active');
+
+  // Reset card state
+  card.classList.remove('approved', 'saved', 'dismissed');
+  card.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+
+  if (!wasActive) {
+    const stateMap = { approve: 'approved', save: 'saved', dismiss: 'dismissed' };
+    const newState = stateMap[action];
+    card.classList.add(newState);
+    btn.classList.add('active');
+    setTopicState(topicId, newState);
+    await saveFeedback(action, topicId, topicName);
+
+    const msg = { approve: '✅ נשמר כרלוונטי', save: '📌 נשמר לאחר כך', dismiss: '❌ הוסר מהרשימה' }[action];
+    showToast(msg);
+  } else {
+    setTopicState(topicId, null);
+  }
+}
+
+function goToPost(topicId) {
+  showTab('posts');
+  setTimeout(() => {
+    const el = document.getElementById(`post-${topicId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// ============================================================
+// RENDER POSTS
+// ============================================================
+function renderPosts() {
+  const container = document.getElementById('posts-container');
+  const count = document.getElementById('posts-count');
+
+  if (!CONTENT.posts.length) return;
+
+  count.textContent = CONTENT.posts.length;
+  container.innerHTML = '';
+
+  CONTENT.posts.forEach(post => {
+    const wordCount = post.text.split(/\s+/).filter(Boolean).length;
+    const typeLabel = { trending: post.topicName, wildcard: '🎲 Wild Card', 'inner-shift': '🔬 Inner Shift' }[post.type];
+    const typeClass = { trending: '', wildcard: 'wildcard', 'inner-shift': 'inner-shift' }[post.type];
+
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    card.id = `post-${post.topicId || post.id}`;
+
+    card.innerHTML = `
+      <div class="post-header">
+        <span class="post-tag ${typeClass}">${typeLabel}</span>
+        <span class="post-wordcount">${wordCount} מילים</span>
+      </div>
+      <textarea class="post-text" rows="10" id="text-${post.id}">${post.text}</textarea>
+      <div class="post-actions">
+        <button class="btn-copy" onclick="copyPost('${post.id}', this)">📋 העתקי לפרסום</button>
+        <button class="btn-publish" onclick="markPublished('${post.id}', '${post.topicName.replace(/'/g, "\\'")}', this)">✓ פורסם</button>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+async function copyPost(postId, btn) {
+  const text = document.getElementById(`text-${postId}`).value;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '✓ הועתק!';
+    btn.classList.add('copied');
+    showToast('✅ הפוסט הועתק — פתחי LinkedIn ולחצי הדבק');
+    setTimeout(() => {
+      btn.textContent = '📋 העתקי לפרסום';
+      btn.classList.remove('copied');
+    }, 3000);
+  } catch {
+    showToast('העתיקי את הטקסט ידנית');
+  }
+}
+
+async function markPublished(postId, topicName, btn) {
+  if (btn.classList.contains('done')) return;
+
+  const text = document.getElementById(`text-${postId}`).value;
+  const excerpt = text.substring(0, 100) + '...';
+  const date = new Date().toLocaleDateString('he-IL');
+
+  btn.classList.add('done');
+  btn.textContent = '✅ פורסם!';
+  btn.closest('.post-card').classList.add('published');
+
+  // Save to published log locally
+  const state = getState();
+  if (!state.published) state.published = [];
+  state.published.unshift({ date, topic: topicName, excerpt });
+  saveState(state);
+
+  // Send to GitHub
+  await saveFeedback('published', postId, topicName, excerpt);
+
+  renderPublished();
+  showToast('🚀 מעולה! הפוסט סומן כפורסם');
+}
+
+// ============================================================
+// RENDER PUBLISHED LOG
+// ============================================================
+function renderPublished() {
+  const container = document.getElementById('published-container');
+  const state = getState();
+
+  // Merge local + content published log
+  const allPublished = [
+    ...(state.published || []),
+    ...CONTENT.publishedLog
+  ];
+
+  // Deduplicate by excerpt
+  const seen = new Set();
+  const unique = allPublished.filter(p => {
+    const key = p.excerpt?.substring(0, 50);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (!unique.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>פוסטים שתסמני כ"פורסם"<br>יופיעו כאן</p></div>`;
+    return;
+  }
+
+  container.innerHTML = unique.map(p => `
+    <div class="published-item">
+      <div class="published-date">${p.date}</div>
+      <div class="published-topic">${p.topic}</div>
+      <div class="published-excerpt">${p.excerpt}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['brief', 'posts', 'published'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.section').forEach(s => {
+    s.classList.toggle('active', s.id === `tab-${name}`);
+  });
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// TOKEN SETUP
+// ============================================================
+function saveToken() {
+  const val = document.getElementById('token-input').value.trim();
+  if (val) {
+    localStorage.setItem('noa-gh-token', val);
+    document.getElementById('config-warning').style.display = 'none';
+    showToast('✅ Token נשמר — הפידבק שלך יישמר מעכשיו');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('last-updated').textContent =
+    CONFIG.LAST_UPDATED !== 'LAST_UPDATED_PLACEHOLDER'
+      ? `עודכן: ${CONFIG.LAST_UPDATED}`
+      : 'ממתין לעדכון ראשון';
+
+  if (!CONFIG.GITHUB_TOKEN) {
+    document.getElementById('config-warning').style.display = 'block';
+  }
+
+  renderBrief();
+  renderPosts();
+  renderPublished();
+});
+</script>
+</body>
+</html>
